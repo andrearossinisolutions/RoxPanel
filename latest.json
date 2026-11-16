@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "url": "",
-  "sha256": "",
-  "notes": "segnaposto: la forma definitiva si decide insieme al controllo versione dell'app"
+  "url": "https://github.com/andrearossinisolutions/RoxPanel/releases/download/v0.1.0/RoxPanel-0.1.0.zip",
+  "sha256": "9c08618d67e689cadcc5ab16918ce06f37b3d2c2e381c8ce4aa5753e83085856",
+  "notes": "Prima versione: finestra di stato, RoxFCU (FCU A320) via HID, avviso aggiornamenti."
 }

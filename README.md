@@ -2,7 +2,7 @@
 
 Pacchetti pronti all'uso di **RoxPanel** per Windows (exe) e il file `latest.json` che l'app legge per sapere se esiste una versione più nuova.
 
-RoxPanel è il programma che collega le periferiche fisiche (la prima è FCUpi, il pannello FCU per l'Airbus A320) al simulatore. Il codice sorgente non è in questa repo: qui vivono solo le release.
+RoxPanel è il programma che collega le periferiche fisiche (la prima è RoxFCU, il pannello FCU per l'Airbus A320) al simulatore. Il codice sorgente non è in questa repo: qui vivono solo le release.
 
 ## Scaricare
 Vai nella sezione **Releases** e scarica l'ultimo pacchetto `RoxPanel-X.Y.Z.zip`, estrailo e avvia `RoxPanel.exe`.
