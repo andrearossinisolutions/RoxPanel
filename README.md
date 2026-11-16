@@ -1,13 +1,115 @@
-# RoxPanel — releases
+# RoxPanel
 
-Pacchetti pronti all'uso di **RoxPanel** per Windows (exe) e il file `latest.json` che l'app legge per sapere se esiste una versione più nuova.
+**RoxPanel** collega le periferiche fisiche di un cockpit al simulatore di volo. La prima periferica è **RoxFCU**: un pannello FCU (Flight Control Unit) per l'**Airbus A320 Fenix** in **Microsoft Flight Simulator 2024**, con manopole, tasti e due display, che si comporta come l'FCU vero.
 
-RoxPanel è il programma che collega le periferiche fisiche (la prima è RoxFCU, il pannello FCU per l'Airbus A320) al simulatore. Il codice sorgente non è in questa repo: qui vivono solo le release.
+Questa repo contiene **solo le release** (il programma per Windows e il file che permette all'app di sapere se c'è una versione più nuova). Il codice sorgente è privato.
 
-## Scaricare
-Vai nella sezione **Releases** e scarica l'ultimo pacchetto `RoxPanel-X.Y.Z.zip`, estrailo e avvia `RoxPanel.exe`.
+➡️ **[Scarica l'ultima versione](../../releases/latest)**
 
-## Come si pubblica una versione (maintainer)
-1. Compila l'exe dal sorgente (`build.bat`) e annota lo SHA-256 del pacchetto.
-2. Crea la release con il pacchetto allegato (tag `vX.Y.Z`).
-3. Aggiorna `latest.json` (versione, note, hash) e fai il commit.
+---
+
+## Cosa fa
+
+Il pannello RoxFCU ha:
+
+- **4 manopole** con encoder rotativo, per **velocità (SPD)**, **prua (HDG)**, **quota (ALT)** e **velocità verticale (V/S)**. Ogni manopola si ruota, si **preme** (push) e si **tira** (pull, pressione lunga), come sull'aereo.
+- **6 pulsanti**: **AP1, AP2, ATHR, LOC, EXPED, APPR**.
+- **2 display LCD 16×2** che mostrano gli stessi valori del pannello reale, in colonne:
+
+```
+ SPD         HDG        ALT      V/S
+ 250         090      ·05000    +15oo
+```
+
+Il display riproduce le convenzioni dell'FCU: quota a cinque cifre (5000 ft = `05000`), Mach (`.78`) al posto della velocità quando serve, trattini quando un valore è "dashed", il puntino quando la quota è in modo *managed*, e la velocità verticale con gli ultimi due zeri più piccoli.
+
+RoxPanel mostra anche in tempo reale lo **stato del sistema**: se il simulatore risponde, se la periferica è collegata, se c'è un aggiornamento.
+
+## Come funziona
+
+```mermaid
+flowchart LR
+    subgraph Pannello["Pannello RoxFCU"]
+        P1["Manopole e tasti"]
+        P2["2 display LCD"]
+    end
+    subgraph PC["PC Windows"]
+        R["RoxPanel"]
+        A["AAO (Axis and Ohs)"]
+        S["MSFS 2024 + Fenix A320"]
+    end
+    P1 -- "pressioni e rotazioni<br/>(USB HID, gamepad)" --> R
+    R -- "valori da mostrare<br/>(USB HID)" --> P2
+    R -- "comandi FCU" --> A
+    A -- "stato dell'FCU" --> R
+    A <--> S
+```
+
+1. **Il pannello** è visto dal computer come un **gamepad USB** (un'unica interfaccia HID). Quando giri una manopola o premi un tasto, invia un report con lo stato di tutti i controlli.
+2. **RoxPanel** legge quei report, riconosce i fronti (una rotazione, una pressione breve o lunga) e li traduce in **comandi per l'FCU del Fenix**, che invia ad **AAO** tramite la sua interfaccia web locale.
+3. In senso inverso RoxPanel **legge da AAO i valori dell'FCU** (velocità, prua, quota, velocità verticale e i relativi flag) e li manda al pannello, che li disegna sui display. Il pannello aggiorna solo ciò che cambia.
+4. Il pannello e il programma si controllano a vicenda con un **segnale di vita** (heartbeat): se RoxPanel si ferma, il display mostra `ERROR: NO LINK`; se è il simulatore a non rispondere, mostra `ERROR: AAO OFF`.
+
+### Perché un gamepad
+
+Alcuni ambienti, come i PC cloud, inoltrano al PC remoto solo le periferiche USB con una singola interfaccia HID (come joystick e manette). Un dispositivo "composito" (tastiera + porta seriale + disco) non passa. RoxFCU è quindi progettato come un **unico dispositivo HID**, che funziona sia su un PC Windows locale sia su un PC Windows in cloud con inoltro USB.
+
+### Modalità del pannello
+
+- **Funzionamento normale**: gamepad HID, nessun disco o console esposti.
+- **Manutenzione** (si attiva con un ponticello all'avvio): il pannello si presenta come disco USB per aggiornare il suo firmware, e non invia comandi.
+
+## Requisiti
+
+- **Windows** (provato su Windows 11), anche un PC cloud con inoltro delle periferiche USB.
+- **Microsoft Flight Simulator 2024** con l'**Airbus A320 Fenix**.
+- **AAO (Axis and Ohs)**, acquistato a parte e in esecuzione, con la sua WebAPI attiva: RoxPanel lo usa per leggere e comandare l'FCU. RoxPanel non include né sostituisce AAO.
+- Il pannello **RoxFCU** collegato via USB.
+
+## Installare e usare
+
+1. Scarica `RoxPanel-X.Y.Z.zip` dalla sezione **Releases**.
+2. Estrailo in una cartella a tua scelta (non serve installare Python).
+3. Avvia `RoxPanel.exe`.
+4. Se Windows mostra l'avviso *"Windows ha protetto il PC"* (SmartScreen): l'eseguibile non è ancora firmato digitalmente. Scegli **Ulteriori informazioni → Esegui comunque**. Puoi verificare lo zip con lo **SHA-256** indicato nelle note di ogni release.
+
+La finestra di stato mostra una riga per ogni componente: **AAO**, lettura dei dati dell'**FCU**, **periferica collegata** e **aggiornamenti**. Un cerchio **verde** significa che è tutto a posto, **giallo** un avviso, **rosso** un errore e **grigio** un controllo in attesa.
+
+I log di funzionamento si trovano nella cartella `logs` accanto a `RoxPanel.exe`.
+
+## Aggiornamenti
+
+All'avvio RoxPanel legge il file [`latest.json`](latest.json) di questa repo per sapere qual è l'ultima versione pubblicata. Se ce n'è una più nuova, la riga **Aggiornamento** diventa gialla e ti dice quale. L'app **non scarica né installa nulla da sola**: l'aggiornamento si scarica a mano dalla sezione Releases. Se la rete non c'è, l'avvio prosegue normalmente.
+
+## Cosa c'è in questa versione
+
+- **0.1.0**: prima versione pubblica. Finestra di stato, comunicazione con il pannello RoxFCU come gamepad HID, lettura e comando dell'FCU del Fenix A320 tramite AAO, display a colonne, avviso di nuove versioni.
+
+## Prossimi passi
+
+Idee in valutazione, nessuna promessa di tempi:
+
+- **Aggiornamento automatico** dell'app dalla finestra di stato.
+- **Altre periferiche** oltre all'FCU, con lo stesso approccio (un solo dispositivo HID per pannello).
+- **Modo TRK/FPA** dell'FCU sui display.
+- Ridurre la **dipendenza da AAO**, valutando un collegamento diretto al simulatore.
+
+## Limiti noti
+
+- Funziona solo su **Windows** e solo con l'**A320 Fenix**.
+- Richiede **AAO**, che è un prodotto a pagamento di terzi.
+- L'eseguibile **non è firmato**: Windows può mostrare un avviso alla prima apertura.
+- Se gli stessi pulsanti sono assegnati anche in AAO, il comando può essere eseguito due volte.
+
+## Informazioni sulla repo
+
+| File | A cosa serve |
+|---|---|
+| `latest.json` | Versione più recente, indirizzo di download e hash SHA-256, letti dall'app |
+| Releases | I pacchetti `RoxPanel-X.Y.Z.zip` |
+
+## Licenza
+
+Uso **non commerciale** consentito, **senza modifiche**. Ogni scopo commerciale è vietato e va concordato per iscritto scrivendo a **andrea@rossinisolutions.com**. Il testo completo è nel file [`LICENSE`](LICENSE).
+
+Progetto personale di **Andrea Rossini**, **Rossini Solutions**. RoxPanel è un progetto indipendente e non è affiliato ad Axis and Ohs, Fenix Simulations, Microsoft o Asobo.
