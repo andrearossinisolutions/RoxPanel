@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0",
-  "url": "https://github.com/andrearossinisolutions/RoxPanel/releases/download/v0.1.0/RoxPanel-0.1.0.zip",
-  "sha256": "9c08618d67e689cadcc5ab16918ce06f37b3d2c2e381c8ce4aa5753e83085856",
-  "notes": "Prima versione: finestra di stato, RoxFCU (FCU A320) via HID, avviso aggiornamenti."
+  "version": "0.2.0",
+  "url": "https://github.com/andrearossinisolutions/RoxPanel/releases/download/v0.2.0/RoxPanel-0.2.0.zip",
+  "sha256": "89b3d4abfc18f46bfd428e437f2497859e9b2b60ab2654899e3d1ae5cc90df6b",
+  "notes": "Collegamento diretto al simulatore con SimConnect (senza AAO), download di SimConnect.dll al primo avvio con consenso, puntino managed su velocita' e prua, finestra di stato ridisegnata."
 }
